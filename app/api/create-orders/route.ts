@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     let args: any;
 
 
-    // New Vapi format
+    // Vapi toolCalls format
     if (body.message?.toolCalls?.[0]) {
       const toolCall = body.message.toolCalls[0];
 
@@ -33,13 +33,13 @@ export async function POST(req: Request) {
     }
 
 
-    // Direct testing / curl
+    // Direct testing
     else {
       args = body;
     }
 
 
-    // Sometimes Vapi sends arguments as a string
+    // Vapi sometimes sends JSON arguments as a string
     if (typeof args === "string") {
       args = JSON.parse(args);
     }
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json(
         {
-          success: false,
+          result: "failed",
           message: "Missing customer name, phone, or items"
         },
         {
@@ -72,7 +72,6 @@ export async function POST(req: Request) {
         }
       );
     }
-
 
 
     const { data, error } = await serverSupabase
@@ -98,10 +97,9 @@ export async function POST(req: Request) {
         error
       );
 
-
       return NextResponse.json(
         {
-          success: false,
+          result: "failed",
           message: "Database failed to save order",
           error: error.message
         },
@@ -112,26 +110,23 @@ export async function POST(req: Request) {
     }
 
 
-
     console.log(
       "ORDER SAVED:",
       data
     );
 
 
-
-    // IMPORTANT FOR VAPI
+    // Vapi success response
     return NextResponse.json(
       {
-        success: true,
-        message: "Order saved successfully",
+        result: "success",
+        message: "Order placed successfully",
         order_id: data.id
       },
       {
         status: 200
       }
     );
-
 
 
   } catch (error: any) {
@@ -144,7 +139,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        success: false,
+        result: "failed",
         message: "Unexpected server error",
         error: error.message
       },
