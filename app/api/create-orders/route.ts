@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { serverSupabase } from "@/lib/serverSupabase";
 
 export async function POST(req: Request) {
   try {
@@ -10,43 +10,33 @@ export async function POST(req: Request) {
       JSON.stringify(body, null, 2)
     );
 
-
     let args;
 
 
-    // Vapi format
+    // New Vapi format
     if (body.message?.toolCalls?.[0]) {
-
-      const toolCall =
-        body.message.toolCalls[0];
+      const toolCall = body.message.toolCalls[0];
 
       args =
         toolCall.function?.arguments ||
         toolCall.arguments;
-
     }
 
 
     // Older Vapi format
     else if (body.message?.toolCallList?.[0]) {
-
-      const toolCall =
-        body.message.toolCallList[0];
+      const toolCall = body.message.toolCallList[0];
 
       args =
         toolCall.function?.arguments ||
         toolCall.arguments;
-
     }
 
 
-    // Normal POST request (curl / website)
+    // Normal POST request (testing)
     else {
-
       args = body;
-
     }
-
 
 
     console.log(
@@ -55,13 +45,11 @@ export async function POST(req: Request) {
     );
 
 
-
     if (
       !args?.customer_name ||
       !args?.phone ||
       !args?.items
     ) {
-
       return NextResponse.json(
         {
           success: false,
@@ -72,13 +60,10 @@ export async function POST(req: Request) {
           status: 400
         }
       );
-
     }
 
 
-
-
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from("orders")
       .insert([
         {
@@ -92,28 +77,22 @@ export async function POST(req: Request) {
       .select();
 
 
-
     if (error) {
-
       console.log(
         "SUPABASE ERROR:",
         error
       );
 
-
       return NextResponse.json(
         {
-          success:false,
-          error:error.message
+          success: false,
+          error: error.message
         },
         {
-          status:500
+          status: 500
         }
       );
-
     }
-
-
 
 
     console.log(
@@ -122,18 +101,15 @@ export async function POST(req: Request) {
     );
 
 
-
     return NextResponse.json(
       {
-        success:true,
-        order:data[0]
+        success: true,
+        order: data[0]
       }
     );
 
 
-
-  } catch(error:any) {
-
+  } catch (error: any) {
 
     console.log(
       "API ERROR:",
@@ -143,14 +119,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        success:false,
-        error:error.message
+        success: false,
+        error: error.message
       },
       {
-        status:500
+        status: 500
       }
     );
-
-
   }
 }
