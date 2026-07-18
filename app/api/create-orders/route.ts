@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { serverSupabase } from "@/lib/serverSupabase";
 
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -10,10 +23,10 @@ export async function POST(req: Request) {
       JSON.stringify(body, null, 2)
     );
 
+
     let args: any;
 
 
-    // Vapi toolCalls format
     if (body.message?.toolCalls?.[0]) {
       const toolCall = body.message.toolCalls[0];
 
@@ -22,8 +35,6 @@ export async function POST(req: Request) {
         toolCall.arguments;
     }
 
-
-    // Older Vapi format
     else if (body.message?.toolCallList?.[0]) {
       const toolCall = body.message.toolCallList[0];
 
@@ -32,23 +43,17 @@ export async function POST(req: Request) {
         toolCall.arguments;
     }
 
-
-    // Direct testing
     else {
       args = body;
     }
 
 
-    // Vapi sometimes sends JSON arguments as a string
     if (typeof args === "string") {
       args = JSON.parse(args);
     }
 
 
-    console.log(
-      "ORDER DATA:",
-      args
-    );
+    console.log("ORDER DATA:", args);
 
 
     if (
@@ -56,19 +61,16 @@ export async function POST(req: Request) {
       !args?.phone ||
       !args?.items
     ) {
-
-      console.log(
-        "MISSING DATA:",
-        args
-      );
-
       return NextResponse.json(
         {
           result: "failed",
-          message: "Missing customer name, phone, or items"
+          message: "Missing order information"
         },
         {
-          status: 400
+          status: 400,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+          },
         }
       );
     }
@@ -82,41 +84,34 @@ export async function POST(req: Request) {
           phone: args.phone,
           items: args.items,
           status: "New",
-          order_time: new Date().toISOString()
-        }
+          order_time: new Date().toISOString(),
+        },
       ])
       .select()
       .single();
 
 
-
     if (error) {
-
-      console.log(
-        "SUPABASE ERROR:",
-        error
-      );
+      console.log("SUPABASE ERROR:", error);
 
       return NextResponse.json(
         {
           result: "failed",
-          message: "Database failed to save order",
-          error: error.message
+          message: error.message
         },
         {
-          status: 500
+          status: 500,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+          },
         }
       );
     }
 
 
-    console.log(
-      "ORDER SAVED:",
-      data
-    );
+    console.log("ORDER SAVED:", data);
 
 
-    // Vapi success response
     return NextResponse.json(
       {
         result: "success",
@@ -124,29 +119,29 @@ export async function POST(req: Request) {
         order_id: data.id
       },
       {
-        status: 200
+        status: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
       }
     );
 
 
-  } catch (error: any) {
+  } catch(error:any) {
 
-    console.log(
-      "API ERROR:",
-      error
-    );
-
+    console.log("API ERROR:", error);
 
     return NextResponse.json(
       {
-        result: "failed",
-        message: "Unexpected server error",
-        error: error.message
+        result:"failed",
+        message:error.message
       },
       {
-        status: 500
+        status:500,
+        headers:{
+          "Access-Control-Allow-Origin":"*",
+        },
       }
     );
-
   }
 }
