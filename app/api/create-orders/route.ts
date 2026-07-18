@@ -6,34 +6,47 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     console.log(
-      "FULL VAPI BODY:",
+      "FULL BODY:",
       JSON.stringify(body, null, 2)
     );
 
-    // Get the tool call from Vapi
-    const toolCall =
-      body.message?.toolCalls?.[0] ||
-      body.message?.toolCallList?.[0];
 
-    if (!toolCall) {
-      console.log("NO TOOL CALL FOUND");
+    let args;
 
-      return NextResponse.json(
-        {
-          success: false,
-          error: "No tool call found"
-        },
-        {
-          status: 400
-        }
-      );
+
+    // Vapi format
+    if (body.message?.toolCalls?.[0]) {
+
+      const toolCall =
+        body.message.toolCalls[0];
+
+      args =
+        toolCall.function?.arguments ||
+        toolCall.arguments;
+
     }
 
 
-    // Vapi stores arguments here
-    const args =
-      toolCall.function?.arguments ||
-      toolCall.arguments;
+    // Older Vapi format
+    else if (body.message?.toolCallList?.[0]) {
+
+      const toolCall =
+        body.message.toolCallList[0];
+
+      args =
+        toolCall.function?.arguments ||
+        toolCall.arguments;
+
+    }
+
+
+    // Normal POST request (curl / website)
+    else {
+
+      args = body;
+
+    }
+
 
 
     console.log(
@@ -42,17 +55,27 @@ export async function POST(req: Request) {
     );
 
 
-    if (!args) {
+
+    if (
+      !args?.customer_name ||
+      !args?.phone ||
+      !args?.items
+    ) {
+
       return NextResponse.json(
         {
           success: false,
-          error: "No order arguments found"
+          error: "Missing order information",
+          received: args
         },
         {
           status: 400
         }
       );
+
     }
+
+
 
 
     const { data, error } = await supabase
@@ -69,22 +92,28 @@ export async function POST(req: Request) {
       .select();
 
 
+
     if (error) {
+
       console.log(
         "SUPABASE ERROR:",
         error
       );
 
+
       return NextResponse.json(
         {
-          success: false,
-          error: error.message
+          success:false,
+          error:error.message
         },
         {
-          status: 500
+          status:500
         }
       );
+
     }
+
+
 
 
     console.log(
@@ -93,15 +122,18 @@ export async function POST(req: Request) {
     );
 
 
+
     return NextResponse.json(
       {
-        success: true,
-        order: data[0]
+        success:true,
+        order:data[0]
       }
     );
 
 
-  } catch (error: any) {
+
+  } catch(error:any) {
+
 
     console.log(
       "API ERROR:",
@@ -111,12 +143,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        success: false,
-        error: error.message
+        success:false,
+        error:error.message
       },
       {
-        status: 500
+        status:500
       }
     );
+
+
   }
 }
