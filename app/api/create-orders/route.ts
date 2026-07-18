@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       JSON.stringify(body, null, 2)
     );
 
-    let args;
+    let args: any;
 
 
     // New Vapi format
@@ -33,9 +33,15 @@ export async function POST(req: Request) {
     }
 
 
-    // Normal POST request (testing)
+    // Direct testing / curl
     else {
       args = body;
+    }
+
+
+    // Sometimes Vapi sends arguments as a string
+    if (typeof args === "string") {
+      args = JSON.parse(args);
     }
 
 
@@ -50,17 +56,23 @@ export async function POST(req: Request) {
       !args?.phone ||
       !args?.items
     ) {
+
+      console.log(
+        "MISSING DATA:",
+        args
+      );
+
       return NextResponse.json(
         {
           success: false,
-          error: "Missing order information",
-          received: args
+          message: "Missing customer name, phone, or items"
         },
         {
           status: 400
         }
       );
     }
+
 
 
     const { data, error } = await serverSupabase
@@ -74,18 +86,23 @@ export async function POST(req: Request) {
           order_time: new Date().toISOString()
         }
       ])
-      .select();
+      .select()
+      .single();
+
 
 
     if (error) {
+
       console.log(
         "SUPABASE ERROR:",
         error
       );
 
+
       return NextResponse.json(
         {
           success: false,
+          message: "Database failed to save order",
           error: error.message
         },
         {
@@ -95,18 +112,26 @@ export async function POST(req: Request) {
     }
 
 
+
     console.log(
       "ORDER SAVED:",
       data
     );
 
 
+
+    // IMPORTANT FOR VAPI
     return NextResponse.json(
       {
         success: true,
-        order: data[0]
+        message: "Order saved successfully",
+        order_id: data.id
+      },
+      {
+        status: 200
       }
     );
+
 
 
   } catch (error: any) {
@@ -120,11 +145,13 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
+        message: "Unexpected server error",
         error: error.message
       },
       {
         status: 500
       }
     );
+
   }
 }
