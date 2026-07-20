@@ -87,9 +87,11 @@ export async function POST(req: Request) {
             customer_name: args.customer_name,
             phone: args.phone,
             items: args.items,
-            status:"New",
-            order_time:new Date().toISOString()
-          }
+            order_total: args.order_total,
+            special_instructions: args.special_instructions,
+            status: "New",
+            order_time: new Date().toISOString(),
+          },
         ])
         .select()
         .single();
