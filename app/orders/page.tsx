@@ -223,6 +223,7 @@ export default function Orders() {
   const [notification, setNotification] = useState<Order | null>(null);
   const [now, setNow] = useState(Date.now());
   const [search, setSearch] = useState("");
+  const [expandedStatus, setExpandedStatus] = useState<OrderStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -370,6 +371,10 @@ export default function Orders() {
       readyOrders,
     };
   }, [orders]);
+
+  const visibleStatusConfigs = expandedStatus
+    ? STATUS_CONFIG.filter((status) => status.label === expandedStatus)
+    : STATUS_CONFIG;
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
@@ -564,8 +569,36 @@ export default function Orders() {
           </section>
         ) : (
           <section className="mt-6 overflow-x-auto pb-4">
-            <div className="grid min-w-[1250px] grid-cols-4 gap-5 2xl:min-w-0">
-              {STATUS_CONFIG.map((statusConfig) => {
+            {expandedStatus && (
+              <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Expanded category
+                  </p>
+                  <p className="mt-1 text-lg font-black text-slate-950">
+                    Showing all {expandedStatus.toLowerCase()} orders
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setExpandedStatus(null)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  <span aria-hidden="true">▦</span>
+                  List view
+                </button>
+              </div>
+            )}
+
+            <div
+              className={
+                expandedStatus
+                  ? "grid grid-cols-1 gap-5"
+                  : "grid min-w-[1250px] grid-cols-4 gap-5 2xl:min-w-0"
+              }
+            >
+              {visibleStatusConfigs.map((statusConfig) => {
                 const columnOrders = filteredOrders.filter(
                   (order) => normalizeStatus(order.status) === statusConfig.label
                 );
@@ -575,7 +608,7 @@ export default function Orders() {
                     key={statusConfig.label}
                     className={`min-h-[620px] rounded-2xl border p-4 shadow-sm ${statusConfig.column}`}
                   >
-                    <div className="mb-4 flex items-center justify-between gap-3">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span
                           className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-sm ${statusConfig.dot}`}
@@ -593,12 +626,44 @@ export default function Orders() {
                         </div>
                       </div>
 
-                      <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-bold text-slate-600 shadow-sm">
-                        {columnOrders.length}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-bold text-slate-600 shadow-sm">
+                          {columnOrders.length}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedStatus(
+                              expandedStatus === statusConfig.label
+                                ? null
+                                : statusConfig.label
+                            )
+                          }
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200"
+                          aria-label={
+                            expandedStatus === statusConfig.label
+                              ? "Return to all order categories"
+                              : `Expand ${statusConfig.label} orders`
+                          }
+                        >
+                          <span aria-hidden="true">
+                            {expandedStatus === statusConfig.label ? "▦" : "⛶"}
+                          </span>
+                          {expandedStatus === statusConfig.label
+                            ? "List view"
+                            : "Expand"}
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div
+                      className={
+                        expandedStatus
+                          ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                          : "space-y-4"
+                      }
+                    >
                       {columnOrders.length === 0 ? (
                         <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-6 text-center">
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl shadow-sm">
