@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AppShell from "@/components/app-shell";
+import DemoDisclaimer from "@/components/DemoDisclaimer";
 
 export const metadata: Metadata = {
   title: "Falafel Flare Dashboard",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <DemoDisclaimer />
         <AppShell>{children}</AppShell>
       </body>
     </html>
